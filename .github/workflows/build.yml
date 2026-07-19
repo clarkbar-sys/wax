@@ -5,7 +5,12 @@ on:
     branches:
       - main
   schedule:
-    - cron: '05 10 * * *'  # 10:05am UTC everyday
+    # 10:05am UTC on Mon/Wed/Fri. Every scheduled fire is a full build of the
+    # multi-GB Bazzite base, and the base does not ship daily, so daily builds
+    # spent minutes reproducing an unchanged image. 3x/week still tracks base
+    # updates within ~2-3 days. See docs/ci-cost.md. Pushes and PRs continue to
+    # build on every change regardless of this schedule.
+    - cron: '05 10 * * 1,3,5'
   push:
     branches:
       - main
