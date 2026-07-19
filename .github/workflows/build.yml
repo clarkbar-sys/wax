@@ -25,6 +25,11 @@ jobs:
     name: Build and push image
     runs-on: ubuntu-24.04
 
+    # Signing is only attempted when a SIGNING_SECRET repo secret is configured.
+    # This lets the image build and publish before you've set up a cosign key.
+    env:
+      SIGNING_ENABLED: ${{ secrets.SIGNING_SECRET != '' }}
+
     permissions:
       contents: read
       packages: write
@@ -144,14 +149,14 @@ jobs:
       # to consume. For more details, review the image signing section of the README.
       - name: Install Cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && env.SIGNING_ENABLED == 'true'
         # https://github.com/containers/container-libs/issues/388
         with:
           cosign-release: 'v2.6.3'
 
       - name: Sign container image
         id: sign-image
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && env.SIGNING_ENABLED == 'true'
         env:
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
