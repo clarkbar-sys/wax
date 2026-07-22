@@ -30,11 +30,16 @@ FROM ghcr.io/ublue-os/bazzite:stable@sha256:b923f92d5a5b59eb992e269383eba2744601
 ## make modifications desired in your image and install packages by modifying the build.sh script
 ## the following RUN directive does all the things required to run "build.sh" as recommended.
 
+# Git short SHA of the build, passed in by the `build` recipe and stamped into
+# the image's os-release / wax-release by build.sh so the running system is
+# self-describing. Empty for ad-hoc `podman build` invocations that don't set it.
+ARG WAX_GIT_SHA=""
+
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
-    /ctx/build.sh
+    WAX_GIT_SHA="${WAX_GIT_SHA}" /ctx/build.sh
 
 ### LINTING
 ## Verify final image and contents are correct.

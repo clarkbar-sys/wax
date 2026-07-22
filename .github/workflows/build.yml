@@ -4,6 +4,13 @@ on:
   pull_request:
     branches:
       - main
+    # Docs/metadata-only PRs don't change the image, so skip the ~20-40 min
+    # Bazzite build for them. Keep this in sync with the push paths-ignore below.
+    paths-ignore:
+      - '**/README.md'
+      - '**.md'
+      - 'LICENSE'
+      - 'artifacthub-repo.yml'
   schedule:
     # 10:05am UTC on Mon/Wed/Fri. Every scheduled fire is a full build of the
     # multi-GB Bazzite base, and the base does not ship daily, so daily builds
@@ -85,8 +92,12 @@ jobs:
             ${DEFAULT_TAG}
 
       # This is optional, this provides smaller delta updates
+      # Rechunking only optimizes download deltas for *published* images, and a
+      # PR never pushes, so skip it on pull_request builds. `just build` above
+      # still fully builds the image, which is what proves a PR compiles.
       - name: Rechunk with rpm-ostree
         id: rechunk
+        if: github.event_name != 'pull_request'
         run: |
           sudo -E $(command -v just) ostree-rechunk \
             ${IMAGE_NAME} \
