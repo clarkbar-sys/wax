@@ -100,8 +100,18 @@ build $target_image=image_name $tag=default_tag:
 
     BUILD_ARGS=()
     LABELS=()
+
+    # Version marker baked into the image (see build_files/build.sh). Computed
+    # unconditionally so even a dirty local build carries *some* marker; a dirty
+    # tree gets a "-dirty" suffix. The URL labels below stay gated on a clean
+    # tree, so the "-dirty" value never lands in a git-ref label.
+    GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
+    if [[ -n "$(git status -s)" ]]; then
+        GIT_SHA="${GIT_SHA}-dirty"
+    fi
+    BUILD_ARGS+=("--build-arg" "WAX_GIT_SHA=${GIT_SHA}")
+
     if [[ -z "$(git status -s)" ]]; then
-        GIT_SHA=$(git rev-parse --short HEAD)
         LABELS+=("--label" "io.artifacthub.package.readme-url=https://raw.githubusercontent.com/{{ repo_organization }}/{{ image_name }}/${GIT_SHA}/README.md")
         LABELS+=("--label" "org.opencontainers.image.documentation=https://raw.githubusercontent.com/{{ repo_organization }}/{{ image_name }}/${GIT_SHA}/README.md")
         LABELS+=("--label" "org.opencontainers.image.source=https://github.com/{{ repo_organization }}/{{ image_name }}/blob/${GIT_SHA}/Containerfile")
